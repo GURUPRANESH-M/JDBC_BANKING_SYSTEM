@@ -80,13 +80,13 @@ public class mainOperation {
                     e.printStackTrace();
                 }
 
-
-                query = "INSERT INTO TRANSACTIONS (ACC_NO,TYPE,AMOUNT) VALUES (?,?,?);";
+                query = "INSERT INTO TRANSACTIONS (ACC_NO,TYPE,AMOUNT,BALANCE) VALUES (?,?,?,?);";
                 try(PreparedStatement stmt = conn.prepareStatement(query)){
                     double newBal = amt;
                     stmt.setDouble(1,id);
                     stmt.setString(2,"WITHDRAW");
                     stmt.setDouble(3,newBal);
+                    stmt.setDouble(4,(a.getBalance() - amt));
                     stmt.executeUpdate();
                     System.out.println("ACCOUNT WITHDRAWN SUCCESSFULLY.");
 
@@ -133,12 +133,13 @@ public class mainOperation {
                 }
 
 
-                query = "INSERT INTO TRANSACTIONS (ACC_NO,TYPE,AMOUNT) VALUES (?,?,?);";
+                query = "INSERT INTO TRANSACTIONS (ACC_NO,TYPE,AMOUNT,BALANCE) VALUES (?,?,?,?);";
                 try(PreparedStatement stmt = conn.prepareStatement(query)){
                     double newBal = amt;
                     stmt.setDouble(1,id);
                     stmt.setString(2,"DEPOSIT");
                     stmt.setDouble(3,newBal);
+                    stmt.setDouble(4,(a.getBalance() + amt));
                     stmt.executeUpdate();
                     System.out.println("ACCOUNT DEPOSITED SUCCESSFULLY.");
 
@@ -214,12 +215,16 @@ public class mainOperation {
             try(PreparedStatement stmt = conn.prepareStatement(query)){
                 stmt.setInt(1,id);
                 ResultSet rs = stmt.executeQuery();
+                System.out.println("+----+--------+----------+---------+---------------------+---------+\n" +
+                        "| id | acc_no | type     | amount  | transaction_date    | balance |\n" +
+                        "+----+--------+----------+---------+---------------------+---------+");
                 while (rs.next()){
                     System.out.println(rs.getInt(1)+" | "+
                             rs.getInt(2)+" | "+
                             rs.getString(3)+" | "+
                             rs.getDouble(4)+" | "+
-                            rs.getObject(5));
+                            rs.getObject(5)+" | "+
+                            rs.getDouble(6));
                 }
             }catch (Exception e){
                 e.printStackTrace();
