@@ -7,7 +7,8 @@ public class mainOperation {
         this.conn = conn;
     }
 
-    public void createAccount(Scanner sc) {
+    public void createAccount(Scanner sc) throws SQLException{
+        conn.setAutoCommit(false);
         System.out.println("ENTER ACCOUNT HOLDER NAME:");
         String name = sc.nextLine();
         System.out.println("ENTER PIN:");
@@ -19,9 +20,10 @@ public class mainOperation {
             stmt.setString(1,name);
             stmt.setInt(2,pin);
             stmt.executeUpdate();
+            conn.commit();
             System.out.println("ACCOUNT CREATED SUCCESSFULLY.");
-
         }catch (Exception e){
+            conn.rollback();
             e.printStackTrace();
         }
     }
@@ -39,8 +41,8 @@ public class mainOperation {
             stmt.setInt(1,id);
             stmt.setInt(2,pin);
             stmt.executeUpdate();
-            System.out.println("ACCOUNT DELETED SUCCESSFULLY.");
             conn.commit();
+            System.out.println("ACCOUNT DELETED SUCCESSFULLY.");
 
         }catch (Exception e){
             System.out.println("DETAILS MISMATCH.");
@@ -59,6 +61,10 @@ public class mainOperation {
         sc.nextLine();
 
         accounts a = findById(id);
+        if(a == null){
+            System.out.println("ACCOUNT NOT FOUND.");
+            return;
+        }
 
 
         if(id == a.getAcc_no() && pin == a.getPin()){
@@ -67,38 +73,35 @@ public class mainOperation {
             sc.nextLine();
 
             if(amt<=a.getBalance()){
-                String query = "UPDATE ACCOUNTS SET BALANCE = ? WHERE ACC_NO = ?;";
-                try(PreparedStatement stmt = conn.prepareStatement(query)){
-                    double newBal = a.getBalance() - amt;
-                    stmt.setDouble(1,newBal);
-                    stmt.setInt(2,id);
-                    stmt.executeUpdate();
 
+                try{
+                    String query = "UPDATE ACCOUNTS SET BALANCE = ? WHERE ACC_NO = ?;";
+                    try(PreparedStatement stmt = conn.prepareStatement(query)){
+                        double newBal = a.getBalance() - amt;
+                        stmt.setDouble(1,newBal);
+                        stmt.setInt(2,id);
+                        stmt.executeUpdate();
+                    }
+
+
+                    query = "INSERT INTO TRANSACTIONS (ACC_NO,TYPE,AMOUNT,BALANCE) VALUES (?,?,?,?);";
+                    try(PreparedStatement stmt = conn.prepareStatement(query)) {
+                        double newBal = amt;
+                        stmt.setDouble(1, id);
+                        stmt.setString(2, "WITHDRAW");
+                        stmt.setDouble(3, newBal);
+                        stmt.setDouble(4, (a.getBalance() - amt));
+                        stmt.executeUpdate();
+                    }
                     conn.commit();
-                }catch (Exception e){
-                    conn.rollback();
-                    e.printStackTrace();
-                }
-
-                query = "INSERT INTO TRANSACTIONS (ACC_NO,TYPE,AMOUNT,BALANCE) VALUES (?,?,?,?);";
-                try(PreparedStatement stmt = conn.prepareStatement(query)){
-                    double newBal = amt;
-                    stmt.setDouble(1,id);
-                    stmt.setString(2,"WITHDRAW");
-                    stmt.setDouble(3,newBal);
-                    stmt.setDouble(4,(a.getBalance() - amt));
-                    stmt.executeUpdate();
                     System.out.println("ACCOUNT WITHDRAWN SUCCESSFULLY.");
-
-                    conn.commit();
                 }catch (Exception e){
                     conn.rollback();
                     e.printStackTrace();
                 }
             }
-
         }else{
-            System.out.println("DETAILS MISMATCH.");
+            System.out.println("INVALID AMOUNT. PLEASE TRY AGAIN.");
         }
     }
 
@@ -112,6 +115,10 @@ public class mainOperation {
         sc.nextLine();
 
         accounts a = findById(id);
+        if(a == null){
+            System.out.println("ACCOUNT NOT FOUND.");
+            return;
+        }
 
 
         if(id == a.getAcc_no() && pin == a.getPin()){
@@ -120,36 +127,31 @@ public class mainOperation {
             sc.nextLine();
 
             if(amt>0){
-                String query = "UPDATE ACCOUNTS SET BALANCE = ? WHERE ACC_NO = ?;";
-                try(PreparedStatement stmt = conn.prepareStatement(query)){
-                    double newBal = a.getBalance() + amt;
-                    stmt.setDouble(1,newBal);
-                    stmt.setInt(2,id);
-                    stmt.executeUpdate();
+                try{
+                    String query = "UPDATE ACCOUNTS SET BALANCE = ? WHERE ACC_NO = ?;";
+                    try(PreparedStatement stmt = conn.prepareStatement(query)){
+                        double newBal = a.getBalance() + amt;
+                        stmt.setDouble(1,newBal);
+                        stmt.setInt(2,id);
+                        stmt.executeUpdate();
+                    }
+
+                    query = "INSERT INTO TRANSACTIONS (ACC_NO,TYPE,AMOUNT,BALANCE) VALUES (?,?,?,?);";
+                    try(PreparedStatement stmt = conn.prepareStatement(query)){
+                        double newBal = amt;
+                        stmt.setDouble(1,id);
+                        stmt.setString(2,"DEPOSIT");
+                        stmt.setDouble(3,newBal);
+                        stmt.setDouble(4,(a.getBalance() + amt));
+                        stmt.executeUpdate();
+                    }
                     conn.commit();
-                }catch (Exception e){
-                    conn.rollback();
-                    e.printStackTrace();
-                }
-
-
-                query = "INSERT INTO TRANSACTIONS (ACC_NO,TYPE,AMOUNT,BALANCE) VALUES (?,?,?,?);";
-                try(PreparedStatement stmt = conn.prepareStatement(query)){
-                    double newBal = amt;
-                    stmt.setDouble(1,id);
-                    stmt.setString(2,"DEPOSIT");
-                    stmt.setDouble(3,newBal);
-                    stmt.setDouble(4,(a.getBalance() + amt));
-                    stmt.executeUpdate();
                     System.out.println("ACCOUNT DEPOSITED SUCCESSFULLY.");
-
-                    conn.commit();
                 }catch (Exception e){
                     conn.rollback();
                     e.printStackTrace();
                 }
             }
-
         }else{
             System.out.println("DETAILS MISMATCH.");
         }
@@ -164,6 +166,10 @@ public class mainOperation {
         sc.nextLine();
 
         accounts a = findById(id);
+        if(a == null){
+            System.out.println("ACCOUNT NOT FOUND.");
+            return;
+        }
 
         if(id == a.getAcc_no() && pin == a.getPin()){
             System.out.println("CURRENT BALANCE: "+a.getBalance());
@@ -209,6 +215,10 @@ public class mainOperation {
         sc.nextLine();
 
         accounts a = findById(id);
+        if(a == null){
+            System.out.println("ACCOUNT NOT FOUND.");
+            return;
+        }
 
         if(id == a.getAcc_no() && pin == a.getPin()){
             String query = "SELECT * FROM TRANSACTIONS WHERE ACC_NO = ?;";
@@ -230,7 +240,6 @@ public class mainOperation {
                 e.printStackTrace();
             }
         }
-
 
     }
 }
