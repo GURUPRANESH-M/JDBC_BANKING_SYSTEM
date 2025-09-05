@@ -4,8 +4,8 @@ import java.util.*;
 public class Main {
     public static void main(String[] args) {
         Scanner sc = new Scanner(System.in);
-        try(Connection con = db.getConnection()){
-            mainOperation m = new mainOperation(con);
+        try(Connection con = DB.getConnection()){
+            MainOperation m = new MainOperation(con);
 
             while (true){
                 System.out.println("=========== WELCOME TO ATM MACHINE ===========");

@@ -1,5 +1,5 @@
 import java.sql.*;
-public class db {
+public class DB {
     private static final String url = "jdbc:mysql://localhost:3306/bank";
     private static final String name = "root";
     private static final String pwd = "root";

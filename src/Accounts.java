@@ -1,10 +1,10 @@
-public class accounts {
+public class Accounts {
     private int acc_no;
     private String name;
     private int pin;
     private double balance;
 
-    public accounts(int acc_no, String name, int pin, double balance) {
+    public Accounts(int acc_no, String name, int pin, double balance) {
         this.acc_no = acc_no;
         this.name = name;
         this.pin = pin;

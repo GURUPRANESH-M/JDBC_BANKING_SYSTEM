@@ -1,9 +1,9 @@
 import java.sql.*;
 import java.util.*;
-public class mainOperation {
+public class MainOperation {
     private Connection conn;
 
-    public mainOperation(Connection conn) {
+    public MainOperation(Connection conn) {
         this.conn = conn;
     }
 
@@ -30,24 +30,35 @@ public class mainOperation {
 
     public void deleteAccount(Scanner sc) throws SQLException{
         conn.setAutoCommit(false);
-        System.out.println("ENTER ACCOUNT NO NAME:");
+        System.out.println("ENTER ACCOUNT NO:");
         int id = sc.nextInt();
+
+        Accounts a = findById(id);
+        if(a == null){
+            System.out.println("ACCOUNT NOT FOUND.");
+            return;
+        }
+
         System.out.println("ENTER PIN:");
         int pin = sc.nextInt();
         sc.nextLine();
 
-        String query = "DELETE FROM ACCOUNTS WHERE ACC_NO = ? AND PIN = ?;";
-        try(PreparedStatement stmt = conn.prepareStatement(query)){
-            stmt.setInt(1,id);
-            stmt.setInt(2,pin);
-            stmt.executeUpdate();
-            conn.commit();
-            System.out.println("ACCOUNT DELETED SUCCESSFULLY.");
+        if(id == a.getAcc_no() && pin == a.getPin()){
+            String query = "DELETE FROM ACCOUNTS WHERE ACC_NO = ? AND PIN = ?;";
+            try(PreparedStatement stmt = conn.prepareStatement(query)){
+                stmt.setInt(1,id);
+                stmt.setInt(2,pin);
+                stmt.executeUpdate();
+                conn.commit();
+                System.out.println("ACCOUNT DELETED SUCCESSFULLY.");
 
-        }catch (Exception e){
-            System.out.println("DETAILS MISMATCH.");
-            conn.rollback();
-            e.printStackTrace();
+            }catch (Exception e){
+                System.out.println("DETAILS MISMATCH.");
+                conn.rollback();
+                e.printStackTrace();
+            }
+        }else{
+            System.out.println("CREDENTIAL MISMATCH.");
         }
     }
 
@@ -56,15 +67,16 @@ public class mainOperation {
         System.out.println("ENTER ACCOUNT NO:");
         int id = sc.nextInt();
         sc.nextLine();
-        System.out.println("ENTER PIN:");
-        int pin = sc.nextInt();
-        sc.nextLine();
 
-        accounts a = findById(id);
+        Accounts a = findById(id);
         if(a == null){
             System.out.println("ACCOUNT NOT FOUND.");
             return;
         }
+
+        System.out.println("ENTER PIN:");
+        int pin = sc.nextInt();
+        sc.nextLine();
 
 
         if(id == a.getAcc_no() && pin == a.getPin()){
@@ -72,7 +84,7 @@ public class mainOperation {
             double amt = sc.nextDouble();
             sc.nextLine();
 
-            if(amt<=a.getBalance()){
+            if(amt>0 && amt<=a.getBalance()){
 
                 try{
                     String query = "UPDATE ACCOUNTS SET BALANCE = ? WHERE ACC_NO = ?;";
@@ -86,10 +98,9 @@ public class mainOperation {
 
                     query = "INSERT INTO TRANSACTIONS (ACC_NO,TYPE,AMOUNT,BALANCE) VALUES (?,?,?,?);";
                     try(PreparedStatement stmt = conn.prepareStatement(query)) {
-                        double newBal = amt;
                         stmt.setDouble(1, id);
                         stmt.setString(2, "WITHDRAW");
-                        stmt.setDouble(3, newBal);
+                        stmt.setDouble(3, amt);
                         stmt.setDouble(4, (a.getBalance() - amt));
                         stmt.executeUpdate();
                     }
@@ -100,8 +111,11 @@ public class mainOperation {
                     e.printStackTrace();
                 }
             }
+            else{
+                System.out.println("INVALID BALANCE.");
+            }
         }else{
-            System.out.println("INVALID AMOUNT. PLEASE TRY AGAIN.");
+            System.out.println("CREDENTIALS MISMATCH.");
         }
     }
 
@@ -110,15 +124,16 @@ public class mainOperation {
         System.out.println("ENTER ACCOUNT NO:");
         int id = sc.nextInt();
         sc.nextLine();
-        System.out.println("ENTER PIN:");
-        int pin = sc.nextInt();
-        sc.nextLine();
 
-        accounts a = findById(id);
+        Accounts a = findById(id);
         if(a == null){
             System.out.println("ACCOUNT NOT FOUND.");
             return;
         }
+
+        System.out.println("ENTER PIN:");
+        int pin = sc.nextInt();
+        sc.nextLine();
 
 
         if(id == a.getAcc_no() && pin == a.getPin()){
@@ -138,10 +153,9 @@ public class mainOperation {
 
                     query = "INSERT INTO TRANSACTIONS (ACC_NO,TYPE,AMOUNT,BALANCE) VALUES (?,?,?,?);";
                     try(PreparedStatement stmt = conn.prepareStatement(query)){
-                        double newBal = amt;
                         stmt.setDouble(1,id);
                         stmt.setString(2,"DEPOSIT");
-                        stmt.setDouble(3,newBal);
+                        stmt.setDouble(3,amt);
                         stmt.setDouble(4,(a.getBalance() + amt));
                         stmt.executeUpdate();
                     }
@@ -161,29 +175,32 @@ public class mainOperation {
         System.out.println("ENTER ACCOUNT NO:");
         int id = sc.nextInt();
         sc.nextLine();
-        System.out.println("ENTER PIN:");
-        int pin = sc.nextInt();
-        sc.nextLine();
 
-        accounts a = findById(id);
+        Accounts a = findById(id);
         if(a == null){
             System.out.println("ACCOUNT NOT FOUND.");
             return;
         }
+
+        System.out.println("ENTER PIN:");
+        int pin = sc.nextInt();
+        sc.nextLine();
+
+
 
         if(id == a.getAcc_no() && pin == a.getPin()){
             System.out.println("CURRENT BALANCE: "+a.getBalance());
         }
     }
 
-    public accounts findById(int id){
+    public Accounts findById(int id){
         String query = "SELECT * FROM ACCOUNTS WHERE ACC_NO = ?;";
         try(PreparedStatement stmt = conn.prepareStatement(query)){
             stmt.setInt(1,id);
             ResultSet rs = stmt.executeQuery();
 
             while (rs.next()){
-                 return new accounts(rs.getInt(1),
+                 return new Accounts(rs.getInt(1),
                         rs.getString(2),rs.getInt(3),rs.getDouble(4));
             }
 
@@ -210,15 +227,18 @@ public class mainOperation {
         System.out.println("ENTER ACCOUNT NO:");
         int id = sc.nextInt();
         sc.nextLine();
-        System.out.println("ENTER PIN:");
-        int pin = sc.nextInt();
-        sc.nextLine();
 
-        accounts a = findById(id);
+        Accounts a = findById(id);
         if(a == null){
             System.out.println("ACCOUNT NOT FOUND.");
             return;
         }
+
+        System.out.println("ENTER PIN:");
+        int pin = sc.nextInt();
+        sc.nextLine();
+
+
 
         if(id == a.getAcc_no() && pin == a.getPin()){
             String query = "SELECT * FROM TRANSACTIONS WHERE ACC_NO = ?;";
@@ -233,7 +253,7 @@ public class mainOperation {
                             rs.getInt(2)+" | "+
                             rs.getString(3)+" | "+
                             rs.getDouble(4)+" | "+
-                            rs.getObject(5)+" | "+
+                            rs.getTimestamp(5)+" | "+
                             rs.getDouble(6));
                 }
             }catch (Exception e){
